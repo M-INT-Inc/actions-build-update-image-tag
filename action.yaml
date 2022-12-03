@@ -59,9 +59,11 @@ runs:
 
         # SSHエージェントにキーを登録
         # golangのビルド時に、private repositoryにあるパッケージを参照する際に必要
-        # echo "${{ inputs.deploy_ssh_key }}" > deploy_ssh_key
-        # chmod 600 deploy_ssh_key
-        # ssh-add -k deploy_ssh_key
+        if [ "${{ inputs.deploy_ssh_key }}" != "" ]; then
+          echo "${{ inputs.deploy_ssh_key }}" > deploy_ssh_key
+          chmod 600 deploy_ssh_key
+          ssh-add -k deploy_ssh_key
+        fi
 
         # Docker build
         DOCKER_BUILDKIT=1 docker build \
