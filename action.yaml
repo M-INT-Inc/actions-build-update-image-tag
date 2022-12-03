@@ -95,7 +95,7 @@ runs:
         command: |
           cd mint-ecs-task-definitions
           git config --local user.email ${{ inputs.git_user_email }}
-          git config --local user.name ${{ inputs.git_user_email }}
+          git config --local user.name ${{ inputs.git_user_name }}
           git config pull.rebase false
 
           mv ${{ inputs.task_definition_file }} tmp.json
