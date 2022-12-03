@@ -1,0 +1,101 @@
+name: build
+description: Build and update task definition
+inputs:
+  aws_region: 
+    default: ap-northeast-1
+  aws_role_arn:
+    require: true
+  git_user_name:
+    require: true
+  git_user_email: 
+    require: true
+  git_personal_access_token:
+    require: true
+  task_definition_repo_ref:
+    require: true
+  task_definition_file:
+    require: true
+  target: 
+    require: true
+  build-args: 
+    default: ""
+  ecr_repository: 
+    require: true
+  gitsha_image_tag:
+    require: true
+  target_image_tag:
+    require: true
+  container_name:
+    require: true
+
+runs:
+  using: "composite"
+  steps:
+    # - name: Set image tag to env
+    #   run: |
+    #     if [ "${{ inputs.image_tag_prefix }}" == ""]; then
+    #       echo "GITSHA_IMAGE_TAG=gitsha-${{ github.sha }}" >> $GITHUB_ENV  
+    #       echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV 
+    #     else
+    #       echo "GITSHA_IMAGE_TAG=${{ inputs.image_tag_prefix }}-gitsha-${{ github.sha }}" >> $GITHUB_ENV  
+    #       echo "IMAGE_TAG=${{ matrix.image_tag_prefix }}-${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV 
+    #     fi
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials From Web Identity
+      uses: aws-actions/configure-aws-credentials@master
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Login to ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to ECR
+      id: build
+      shell: bash
+      run: |
+        GITSHA_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.gitsha_image_tag }}
+        TARGET_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.target_image_tag }}
+        DOCKER_BUILDKIT=1 docker build \
+          --target ${{ inputs.target }} \
+          ${{ inputs.build-args }} \
+          -t $GITSHA_IMAGE_URL \
+          .
+        docker push $_IMAGE_URL
+        docker tag $BUILD_IMAGE_URL $TARGET_IMAGE_URL
+        docker push $TARGET_IMAGE_URL
+
+    - name: Checkout task definition repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.repository_owner }}/mint-ecs-task-definitions
+        ref: ${{ inputs.task_definition_repo_ref }}
+        token: ${{ inputs.git_personal_access_token }}
+        path: mint-ecs-task-definitions
+
+    - name: Update task definition
+      uses: nick-fields/retry@v2
+      with:
+        max_attempts: 3
+        timeout_seconds: 15
+        retry_on: error
+        shell: bash
+        command: |
+          cd mint-ecs-task-definitions
+          git config --local user.email ${{ inputs.git_user_email }}
+          git config --local user.name ${{ inputs.git_user_email }}
+          git config pull.rebase false
+
+          mv ${{ inpus.task_definition_file }} tmp.json
+          IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ env.BUILD_IMAGE_TAG }}
+          cat tmp.json | jq '(.containerDefinitions[] | select(.name == "${{ inputs.container_name }}") | .image) |= "'$IMAGE_URL'"' > ${{ inpus.task_definition_file }}
+          cat ${{ inpus.task_definition_file }}
+
+          git pull
+          git add ${{ inpus.task_definition_file }}
+          git commit -m "[UpdateImageTag] ${{ inpus.task_definition_file }} ${{ inputs.container_name }} ${{ env.BUILD_IMAGE_TAG }}"
+          git push
