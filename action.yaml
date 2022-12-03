@@ -11,6 +11,8 @@ inputs:
     require: true
   git_personal_access_token:
     require: true
+  deploy_ssh_key:
+    default: ""
   task_definition_repo_ref:
     require: true
   task_definition_file:
@@ -48,13 +50,26 @@ runs:
       id: build
       shell: bash
       run: |
+        # Image URL
         GITSHA_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.gitsha_image_tag }}
         TARGET_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.target_image_tag }}
+
+        # SSHエージェントにキーを登録
+        # golangのビルド時に、private repositoryにあるパッケージを参照する際に必要
+        echo "${{ inputs.deploy_ssh_key }}" > deploy_ssh_key
+        chmod 600 deploy_ssh_key
+        eval "$(ssh-agent)"
+        ssh-add -k deploy_ssh_key
+
+        # Docker build
         DOCKER_BUILDKIT=1 docker build \
+          --ssh default \
           --target ${{ inputs.target }} \
           ${{ inputs.build-args }} \
           -t $GITSHA_IMAGE_URL \
           .
+
+        # Docker push
         docker tag $GITSHA_IMAGE_URL $TARGET_IMAGE_URL
         docker push $TARGET_IMAGE_URL
 
