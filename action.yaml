@@ -65,7 +65,7 @@ runs:
           ${{ inputs.build-args }} \
           -t $GITSHA_IMAGE_URL \
           .
-        docker tag $BUILD_IMAGE_URL $TARGET_IMAGE_URL
+        docker tag $GITSHA_IMAGE_URL $TARGET_IMAGE_URL
         docker push $TARGET_IMAGE_URL
 
     - name: Checkout task definition repository
