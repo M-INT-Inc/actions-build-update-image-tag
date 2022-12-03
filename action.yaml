@@ -69,7 +69,7 @@ runs:
         DOCKER_BUILDKIT=1 docker build \
           --ssh default \
           --target ${{ inputs.target }} \
-          ${{ inputs.build-args }} \
+          ${{ inputs.build_args }} \
           -t $GITSHA_IMAGE_URL \
           .
 
