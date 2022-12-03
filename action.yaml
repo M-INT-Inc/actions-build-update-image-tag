@@ -17,7 +17,7 @@ inputs:
     require: true
   target: 
     require: true
-  build-args: 
+  build_args: 
     default: ""
   ecr_repository: 
     require: true
