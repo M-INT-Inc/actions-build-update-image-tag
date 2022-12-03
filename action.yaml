@@ -80,11 +80,11 @@ runs:
           git config pull.rebase false
 
           mv ${{ inputs.task_definition_file }} tmp.json
-          IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ env.BUILD_IMAGE_TAG }}
+          IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.target_image_tag }}
           cat tmp.json | jq '(.containerDefinitions[] | select(.name == "${{ inputs.container_name }}") | .image) |= "'$IMAGE_URL'"' > ${{ inputs.task_definition_file }}
           cat ${{ inputs.task_definition_file }}
 
           git pull
           git add ${{ inputs.task_definition_file }}
-          git commit -m "[UpdateImageTag] ${{ inputs.task_definition_file }} ${{ inputs.container_name }} ${{ env.BUILD_IMAGE_TAG }}"
+          git commit -m "[UpdateImageTag] ${{ inputs.task_definition_file }} ${{ inputs.container_name }} ${{ inputs.target_image_tag }}"
           git push
