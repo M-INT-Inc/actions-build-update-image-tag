@@ -31,16 +31,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # - name: Set image tag to env
-    #   run: |
-    #     if [ "${{ inputs.image_tag_prefix }}" == ""]; then
-    #       echo "GITSHA_IMAGE_TAG=gitsha-${{ github.sha }}" >> $GITHUB_ENV  
-    #       echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV 
-    #     else
-    #       echo "GITSHA_IMAGE_TAG=${{ inputs.image_tag_prefix }}-gitsha-${{ github.sha }}" >> $GITHUB_ENV  
-    #       echo "IMAGE_TAG=${{ matrix.image_tag_prefix }}-${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV 
-    #     fi
-
     - name: Checkout
       uses: actions/checkout@v3
 
