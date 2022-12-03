@@ -54,12 +54,14 @@ runs:
         GITSHA_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.gitsha_image_tag }}
         TARGET_IMAGE_URL=${{ steps.login-ecr.outputs.registry }}/${{ inputs.ecr_repository }}:${{ inputs.target_image_tag }}
 
+        # SSHエージェント起動
+        eval "$(ssh-agent)"
+
         # SSHエージェントにキーを登録
         # golangのビルド時に、private repositoryにあるパッケージを参照する際に必要
-        echo "${{ inputs.deploy_ssh_key }}" > deploy_ssh_key
-        chmod 600 deploy_ssh_key
-        eval "$(ssh-agent)"
-        ssh-add -k deploy_ssh_key
+        # echo "${{ inputs.deploy_ssh_key }}" > deploy_ssh_key
+        # chmod 600 deploy_ssh_key
+        # ssh-add -k deploy_ssh_key
 
         # Docker build
         DOCKER_BUILDKIT=1 docker build \
