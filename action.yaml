@@ -37,7 +37,7 @@ runs:
       uses: actions/checkout@v3
 
     - name: Configure AWS Credentials From Web Identity
-      uses: aws-actions/configure-aws-credentials@master
+      uses: aws-actions/configure-aws-credentials@v1-node16
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.aws_region }}
