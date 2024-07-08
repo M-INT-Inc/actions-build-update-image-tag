@@ -34,17 +34,17 @@ runs:
   using: "composite"
   steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Configure AWS Credentials From Web Identity
-      uses: aws-actions/configure-aws-credentials@v1-node16
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ inputs.aws_role_arn }}
         aws-region: ${{ inputs.aws_region }}
 
     - name: Login to ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build, tag, and push image to ECR
       id: build
@@ -78,7 +78,7 @@ runs:
         docker push $TARGET_IMAGE_URL
 
     - name: Checkout task definition repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ github.repository_owner }}/mint-ecs-task-definitions
         ref: ${{ inputs.task_definition_repo_ref }}
@@ -86,7 +86,7 @@ runs:
         path: mint-ecs-task-definitions
 
     - name: Update task definition
-      uses: nick-fields/retry@v2
+      uses: nick-fields/retry@v3
       with:
         max_attempts: 3
         timeout_seconds: 15
